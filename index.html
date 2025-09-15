@@ -50,8 +50,9 @@ button:hover{background:#333;}
     <option value="https://upload.wikimedia.org/wikipedia/commons/7/7c/Hamster.jpg">Хом'як</option>
     <option value="https://upload.wikimedia.org/wikipedia/commons/0/0a/Dog_profile.jpg">Собака</option>
   </select>
-  <br>
-  <input type="checkbox" id="adminCheck"> Увійти як адмін
+  <br><br>
+  <!-- ГАЛОЧКА ДЛЯ АДМІНА -->
+  <input type="checkbox" id="adminCheck"> <label for="adminCheck">Увійти як адмін</label>
 </div>
 
 <div id="gamePanel">
@@ -117,7 +118,6 @@ function updateUI(){
     else if(player.score>=10000){ cheese.src=cheeseImages.super1; cheese.style.width=`${200+Math.floor(player.score/10000)*50}px`; player.multiplier=Math.max(player.multiplier,5);}
     else{ cheese.src=cheeseImages.normal; cheese.style.width="200px"; }
 
-    // Ефект Level Up
     if(player.level>prevLevel){
       cheese.classList.add("levelUp");
       playerImg.classList.add("levelUp");
@@ -157,7 +157,6 @@ function modifyPlayer(idx){
   updateUI();
 }
 
-// Натискання на сир
 cheese.addEventListener("click",()=>{
   if(player.isAdmin) return;
   player.score+=player.multiplier;
@@ -167,7 +166,6 @@ cheese.addEventListener("click",()=>{
   savePlayer();
 });
 
-// Апгрейди
 document.getElementById("buyMultiplier").addEventListener("click",()=>{
   if(player.isAdmin) return;
   if(player.score>=50){player.score-=50;player.multiplier++;updateUI();savePlayer();}
@@ -179,12 +177,10 @@ document.getElementById("buyFarmer").addEventListener("click",()=>{
   else alert("Недостатньо сиру!");
 });
 
-// Автофермер
 setInterval(()=>{
   if(player && player.farmers>0 && !player.isAdmin){ player.score+=player.farmers; updateUI(); savePlayer(); }
 },1000);
 
-// Логін / реєстрація
 loginBtn.addEventListener("click",()=>{
   const nick = nickInput.value.trim();
   const pass = passInput.value;
