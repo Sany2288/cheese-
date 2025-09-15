@@ -1,0 +1,152 @@
+# cheese-
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Cheese Combat</title>
+<style>
+body { font-family: Arial, sans-serif; text-align: center; background: #000; color: #fff; margin: 0; padding: 0; user-select: none; }
+#gamePanel { display:none; }
+#cheese, #playerImg { cursor: pointer; transition: transform 0.3s, width 0.3s; }
+#score,#level { font-size: 24px; margin:10px; }
+#upgrades, #loginPanel, #leaderboard { margin-top: 20px; }
+button { padding:8px 12px; margin:5px; font-size:14px; cursor:pointer; background:#222; color:#fff; border:1px solid #555; border-radius:5px; }
+button:hover{background:#333;}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.2);}100%{transform:scale(1);}}
+.pulse{animation:pulse 0.5s ease;}
+@keyframes levelUp{0%{transform:scale(1);}50%{transform:scale(1.3);}100%{transform:scale(1);}}
+.levelUp{animation:levelUp 0.5s ease;}
+#leaderboard{ text-align:left; display:inline-block; margin-top:20px; background:#111; padding:10px; border-radius:8px; max-height:400px; overflow-y:auto;}
+.playerImg{width:50px; vertical-align:middle; border-radius:5px; margin-right:5px;}
+</style>
+</head>
+<body>
+
+<h1>🧀 Cheese Combat</h1>
+
+<div id="loginPanel">
+  <input type="text" id="nick" placeholder="Нікнейм">
+  <input type="password" id="pass" placeholder="Пароль">
+  <button id="loginBtn">Увійти / Зареєструвати</button>
+  <br><br>
+  <label>Виберіть персонажа:</label>
+  <select id="characterSelect">
+    <option value="https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg">Кіт</option>
+    <option value="https://upload.wikimedia.org/wikipedia/commons/6/6e/Grey_Rabbit.jpg">Кролик</option>
+    <option value="https://upload.wikimedia.org/wikipedia/commons/7/7c/Hamster.jpg">Хом'як</option>
+    <option value="https://upload.wikimedia.org/wikipedia/commons/0/0a/Dog_profile.jpg">Собака</option>
+  </select>
+</div>
+
+<div id="gamePanel">
+  <div id="score">Сир: 0</div>
+  <div id="level">Рівень: 1</div>
+  <img id="playerImg" src="" alt="Player" class="playerImg">
+  <img id="cheese" src="" alt="Cheese"><br>
+
+  <div id="upgrades">
+    <button id="buyMultiplier">Купити множник (50)</button>
+    <button id="buyFarmer">Купити автофермера (100)</button>
+  </div>
+
+  <h2>🏆 Топ-100 лідерів</h2>
+  <div id="leaderboard"></div>
+</div>
+
+<script>
+let player = null;
+let allPlayers = JSON.parse(localStorage.getItem("cheesePlayers")||"[]");
+
+const cheeseImages = {
+  normal: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Emmental_cheese.jpg",
+  super1: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Cheddar_cheese.jpg",
+  super2: "https://upload.wikimedia.org/wikipedia/commons/4/42/Brie_cheese.jpg",
+  super3: "https://upload.wikimedia.org/wikipedia/commons/1/1b/Gouda_cheese.jpg"
+};
+
+const loginPanel = document.getElementById("loginPanel");
+const gamePanel = document.getElementById("gamePanel");
+const nickInput = document.getElementById("nick");
+const passInput = document.getElementById("pass");
+const loginBtn = document.getElementById("loginBtn");
+const characterSelect = document.getElementById("characterSelect");
+const playerImg = document.getElementById("playerImg");
+const scoreDiv = document.getElementById("score");
+const levelDiv = document.getElementById("level");
+const cheese = document.getElementById("cheese");
+const leaderboardDiv = document.getElementById("leaderboard");
+
+function savePlayers(){ localStorage.setItem("cheesePlayers", JSON.stringify(allPlayers)); }
+function savePlayer(){
+  const idx = allPlayers.findIndex(p=>p.nick===player.nick);
+  if(idx>=0){ allPlayers[idx]=player; savePlayers(); }
+}
+
+function updateUI(){
+  scoreDiv.innerText="Сир: "+player.score;
+  const prevLevel = player.level;
+  player.level=Math.floor(player.score/100)+1;
+  levelDiv.innerText="Рівень: "+player.level;
+
+  if(player.score>=100000){ cheese.src=cheeseImages.super3; cheese.style.width=`${200+Math.floor(player.score/100000)*100}px`; player.multiplier=Math.max(player.multiplier,50);}
+  else if(player.score>=50000){ cheese.src=cheeseImages.super2; cheese.style.width=`${200+Math.floor(player.score/50000)*75}px`; player.multiplier=Math.max(player.multiplier,20);}
+  else if(player.score>=10000){ cheese.src=cheeseImages.super1; cheese.style.width=`${200+Math.floor(player.score/10000)*50}px`; player.multiplier=Math.max(player.multiplier,5);}
+  else{ cheese.src=cheeseImages.normal; cheese.style.width="200px"; }
+
+  // Ефект Level Up
+  if(player.level>prevLevel){
+    cheese.classList.add("levelUp");
+    playerImg.classList.add("levelUp");
+    setTimeout(()=>{cheese.classList.remove("levelUp"); playerImg.classList.remove("levelUp");},500);
+  }
+
+  allPlayers.sort((a,b)=>b.score-a.score);
+  leaderboardDiv.innerHTML="";
+  for(let i=0;i<Math.min(100,allPlayers.length);i++){
+    leaderboardDiv.innerHTML+=`<img src="${allPlayers[i].character}" class="playerImg">${i+1}. ${allPlayers[i].nick}: ${allPlayers[i].score}<br>`;
+  }
+}
+
+cheese.addEventListener("click",()=>{
+  player.score+=player.multiplier;
+  updateUI();
+  cheese.classList.add("pulse");
+  setTimeout(()=>cheese.classList.remove("pulse"),500);
+  savePlayer();
+});
+
+document.getElementById("buyMultiplier").addEventListener("click",()=>{
+  if(player.score>=50){player.score-=50;player.multiplier++;updateUI();savePlayer();}
+  else alert("Недостатньо сиру!");
+});
+document.getElementById("buyFarmer").addEventListener("click",()=>{
+  if(player.score>=100){player.score-=100;player.farmers++;updateUI();savePlayer();}
+  else alert("Недостатньо сиру!");
+});
+
+setInterval(()=>{
+  if(player && player.farmers>0){ player.score+=player.farmers; updateUI(); savePlayer(); }
+},1000);
+
+loginBtn.addEventListener("click",()=>{
+  const nick = nickInput.value.trim();
+  const pass = passInput.value;
+  const character = characterSelect.value;
+  if(!nick||!pass){ alert("Введіть нікнейм та пароль!"); return; }
+  let existing = allPlayers.find(p=>p.nick===nick);
+  if(existing){
+    if(existing.pass!==pass){ alert("Невірний пароль!"); return; }
+    player = existing;
+  } else {
+    player={nick,nickDisplay:nick,pass,score:0,multiplier:1,farmers:0,level:1,character};
+    allPlayers.push(player);
+  }
+  loginPanel.style.display="none";
+  gamePanel.style.display="block";
+  playerImg.src=player.character;
+  updateUI();
+  savePlayers();
+});
+</script>
+</body>
+</html>
